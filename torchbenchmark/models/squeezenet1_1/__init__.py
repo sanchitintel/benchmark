@@ -3,6 +3,36 @@ from torchbenchmark.tasks import COMPUTER_VISION
 
 class Model(TorchVisionModel):
     task = COMPUTER_VISION.CLASSIFICATION
+    optimized_for_inference = True
+    def __init__(self, device=None, jit=False, fuser="", train_bs=64, eval_bs=1):
+        super().__init__()
+        self.device = device
+        self.jit = jit
+        self.model = models.squeezenet1_1().to(self.device)
+        self.eval_model = models.squeezenet1_1().to(self.device)
+        self.example_inputs = (torch.randn((train_bs, 3, 224, 224)).to(self.device),)
+        self.infer_example_inputs = (torch.randn((eval_bs, 3, 224, 224)).to(self.device),)
+
+        if self.jit:
+            if fuser == "llga":
+                self.model = torch.jit.trace(self.model, self.example_inputs)
+                self.eval_model.eval()
+                self.eval_model = torch.jit.trace(self.eval_model, self.infer_example_inputs)
+            else:
+                if hasattr(torch.jit, '_script_pdt'):
+                    self.model = torch.jit._script_pdt(self.model, example_inputs=[self.example_inputs, ])
+                    self.eval_model = torch.jit._script_pdt(self.eval_model)
+                else:
+                    self.model = torch.jit.script(self.model, example_inputs=[self.example_inputs, ])
+                    self.eval_model = torch.jit.script(self.eval_model)
+                # model needs to in `eval`
+                # in order to be optimized for inference
+                self.eval_model.eval()
+                self.eval_model = torch.jit.optimize_for_inference(self.eval_model)
+
+
+    def get_module(self):
+        return self.model, self.example_inputs
 
     # Original train batch size: 512, out of memory on V100 GPU
     # Use hierarchical batching to scale down: 512 = batch_size (32) * epoch_size (16)
