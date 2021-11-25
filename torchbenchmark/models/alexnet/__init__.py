@@ -18,6 +18,7 @@ class Model(TorchVisionModel):
                 self.model = torch.jit.trace(self.model, self.example_inputs)
                 self.eval_model.eval()
                 self.eval_model = torch.jit.trace(self.eval_model, self.infer_example_inputs)
+                self.eval_model = torch.jit.freeze(self.eval_model)
             else:
                 if hasattr(torch.jit, '_script_pdt'):
                     self.model = torch.jit._script_pdt(self.model, example_inputs=[self.example_inputs, ])
