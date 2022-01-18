@@ -1,5 +1,4 @@
 export OMP_NUM_THREADS=1
-export DNNL_GRAPH_CONSTANT_CACHE=1
 
 models="test_bench.py::TestBenchNetwork::test_eval[resnext50_32x4d-cpu-jit] \
 test_bench.py::TestBenchNetwork::test_eval[resnet50-cpu-jit] \
