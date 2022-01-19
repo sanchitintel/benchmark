@@ -46,4 +46,4 @@ python test.py -k test_eval[test_resnet50-cpu-jit] -- fuser llga --ignore_machin
 
 ### Running individual models to debug
 ```
-python run.py <model> -d cpu,cuda -m jit -t eval --fuser llga
+python run.py <model> -d cpu -m jit -t eval --fuser llga
