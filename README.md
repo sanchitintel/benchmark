@@ -20,7 +20,7 @@ Apart from the instructions mentioned in the TorchBench repo, the only addendum 
 ## Running Model Benchmarks
 
 It's recommeded that you simply run `compare_llga.sh` to compare (NNC + OFI) JIT performance with oneDNN Graph JIT performance.
-Currently, for PyTorch, only FP32 inference is supported by oneDNN Graph, but IPEX (Intel PyTorch Extensions) supports more datatypes with oneDNN Graph. LLGA (Low-Level Graph API) is synonymous with oneDNN Graph.
+Currently, for PyTorch, only FP32 inference is supported by oneDNN Graph, but IPEX (Intel PyTorch Extensions) supports more datatypes with oneDNN Graph. Just FYI, LLGA (Low-Level Graph API) is synonymous with oneDNN Graph.
 
 There are currently two top-level scripts for running the models.
 
@@ -39,7 +39,6 @@ python test.py -k test_eval[test_resnet50-cpu-jit] -- fuser llga --ignore_machin
 ```
 
 
-```
 
 ### Using pytest-benchmark driver
 `pytest test_bench.py` invokes the benchmark driver.  See `--help` for a complete list of options.
