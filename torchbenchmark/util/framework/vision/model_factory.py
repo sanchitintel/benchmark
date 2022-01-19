@@ -8,7 +8,7 @@ from torchbenchmark.util.framework.vision.args import parse_args, apply_args
 class TorchVisionModel(BenchmarkModel):
     optimized_for_inference = True
 
-    def __init__(self, model_name=None, device=None, jit=False, train_bs=1, eval_bs=1, extra_args=[]):
+    def __init__(self, model_name=None, device=None, jit=False, fuser="", train_bs=1, eval_bs=1, extra_args=[]):
         super().__init__()
         self.device = device
         self.jit = jit
@@ -25,16 +25,22 @@ class TorchVisionModel(BenchmarkModel):
         apply_args(self, self.args)
 
         if self.jit:
-            if hasattr(torch.jit, '_script_pdt'):
-                self.model = torch.jit._script_pdt(self.model, example_inputs=[self.example_inputs, ])
-                self.eval_model = torch.jit._script_pdt(self.eval_model)
+            if fuser == "llga":
+                self.model = torch.jit.trace(self.model, self.example_inputs)
+                self.eval_model = torch.jit.trace(self.eval_model, self.eval_example_inputs)
+                self.eval_model.eval()
+                self.eval_model = torch.jit.freeze(self.eval_model)
             else:
-                self.model = torch.jit.script(self.model, example_inputs=[self.example_inputs, ])
-                self.eval_model = torch.jit.script(self.eval_model)
-            # model needs to in `eval`
-            # in order to be optimized for inference
-            self.eval_model.eval()
-            self.eval_model = torch.jit.optimize_for_inference(self.eval_model)
+                if hasattr(torch.jit, '_script_pdt'):
+                    self.model = torch.jit._script_pdt(self.model, example_inputs=[self.example_inputs, ])
+                    self.eval_model = torch.jit._script_pdt(self.eval_model)
+                else:
+                    self.model = torch.jit.script(self.model, example_inputs=[self.example_inputs, ])
+                    self.eval_model = torch.jit.script(self.eval_model)
+                # model needs to in `eval`
+                # in order to be optimized for inference
+                self.eval_model.eval()
+                self.eval_model = torch.jit.optimize_for_inference(self.eval_model)
 
     # By default, FlopCountAnalysis count one fused-mult-add (FMA) as one flop.
     # However, in our context, we count 1 FMA as 2 flops instead of 1.

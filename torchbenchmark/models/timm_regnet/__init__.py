@@ -10,7 +10,7 @@ class Model(BenchmarkModel):
     task = COMPUTER_VISION.CLASSIFICATION
     optimized_for_inference = True
 
-    def __init__(self, device=None, jit=False,
+    def __init__(self, device=None, jit=False, fuser="",
                  variant='regnety_016', precision='float32',
                  eval_bs=32, train_bs=32):
         super().__init__()
@@ -36,10 +36,16 @@ class Model(BenchmarkModel):
         )
 
         if jit:
-            self.model = torch.jit.script(self.model)
-            self.eval_model = torch.jit.script(self.eval_model)
-            assert isinstance(self.eval_model, torch.jit.ScriptModule)
-            self.eval_model = torch.jit.optimize_for_inference(self.eval_model)
+            if fuser == "llga":
+                self.model = torch.jit.trace(self.model, self.example_inputs)
+                self.eval_model.eval()
+                self.eval_model = torch.jit.trace(self.eval_model, self.infer_example_inputs)
+                self.eval_model = torch.jit.freeze(self.eval_model)
+            else:
+                self.model = torch.jit.script(self.model)
+                self.eval_model = torch.jit.script(self.eval_model)
+                assert isinstance(self.eval_model, torch.jit.ScriptModule)
+                self.eval_model = torch.jit.optimize_for_inference(self.eval_model)
     
     def _gen_input(self, batch_size):
         return torch.randn((batch_size,) + self.cfg.input_size, device=self.device, dtype=self.cfg.data_dtype)

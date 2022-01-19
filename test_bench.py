@@ -68,14 +68,15 @@ class TestBenchNetwork:
             if not task.model_details.exists:
                 return  # Model is not supported.
 
-            task.make_model_instance(device=device, jit=(compiler == 'jit'))
+            with torch.no_grad():
+                task.make_model_instance(device=device, jit=(compiler == 'jit'), fuser=pytestconfig.getoption("fuser"))
 
-            with task.no_grad(disable_nograd=pytestconfig.getoption("disable_nograd")):
-                task.set_eval()
-                benchmark(task.eval)
-                benchmark.extra_info['machine_state'] = get_machine_state()
-                if pytestconfig.getoption("check_opt_vs_noopt_jit"):
-                    task.check_opt_vs_noopt_jit()
+                with task.no_grad(disable_nograd=pytestconfig.getoption("disable_nograd")):
+                    task.set_eval()
+                    benchmark(task.eval)
+                    benchmark.extra_info['machine_state'] = get_machine_state()
+                    if pytestconfig.getoption("check_opt_vs_noopt_jit"):
+                        task.check_opt_vs_noopt_jit()
 
         except NotImplementedError:
             print(f'Method eval on {device} is not implemented, skipping...')

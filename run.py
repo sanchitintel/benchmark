@@ -151,6 +151,7 @@ if __name__ == "__main__":
                         help="Utilization test using increasing number of cuda streams.")
     parser.add_argument("--bs", type=int, help="Specify batch size to the test.")
     parser.add_argument("--flops", action="store_true", help="Return the flops result")
+    parser.add_argument("--fuser", help="Use one of the available fusers: te, old, nvfuser", default="te", choices=["te", "old", "nvfuser", "llga"])
     args, extra_args = parser.parse_known_args()
 
     if args.cudastreams and not args.device == "cuda":
@@ -189,9 +190,9 @@ if __name__ == "__main__":
             exit(1)
     else:
         if support_extra_args:
-            m = Model(device=args.device, jit=(args.mode == "jit"), extra_args=extra_args)
+            m = Model(device=args.device, jit=(args.mode == "jit"), extra_args=extra_args, fuser=args.fuser)
         else:
-            m = Model(device=args.device, jit=(args.mode == "jit"))
+            m = Model(device=args.device, jit=(args.mode == "jit"), fuser=args.fuser)
 
     test = getattr(m, args.test)
     model_flops = None

@@ -11,6 +11,7 @@ import traceback
 import unittest
 from unittest.mock import patch
 import yaml
+import pytest
 
 import torch
 from torchbenchmark import _list_model_paths, ModelTask, get_metadata_from_yaml
@@ -99,7 +100,7 @@ def _load_test(path, device):
         task = ModelTask(path, timeout=TIMEOUT)
         with task.watch_cuda_memory(skip=(device != "cuda"), assert_equal=self.assertEqual):
             try:
-                task.make_model_instance(device=device, jit=False)
+                task.make_model_instance(device=device, jit=False, fuser=pytestconfig.getoption("fuser"))
                 task.check_device()
                 task.del_model_instance()
             except NotImplementedError:
