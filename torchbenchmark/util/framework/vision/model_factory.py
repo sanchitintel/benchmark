@@ -27,9 +27,12 @@ class TorchVisionModel(BenchmarkModel):
         if self.jit:
             if fuser == "llga":
                 self.model = torch.jit.trace(self.model, self.example_inputs)
-                self.eval_model = torch.jit.trace(self.eval_model, self.eval_example_inputs)
                 self.eval_model.eval()
+                self.eval_model = torch.jit.trace(self.eval_model, self.eval_example_inputs)
                 self.eval_model = torch.jit.freeze(self.eval_model)
+                # Run two warmup iterations here
+                self.eval_model(torch.randn((eval_bs, 3, 224, 224)).to(self.device))
+                self.eval_model(torch.randn((eval_bs, 3, 224, 224)).to(self.device))
             else:
                 if hasattr(torch.jit, '_script_pdt'):
                     self.model = torch.jit._script_pdt(self.model, example_inputs=[self.example_inputs, ])
@@ -41,6 +44,9 @@ class TorchVisionModel(BenchmarkModel):
                 # in order to be optimized for inference
                 self.eval_model.eval()
                 self.eval_model = torch.jit.optimize_for_inference(self.eval_model)
+                # Run two warmup iterations here
+                self.eval_model(torch.randn((eval_bs, 3, 224, 224)).to(self.device))
+                self.eval_model(torch.randn((eval_bs, 3, 224, 224)).to(self.device))
 
     # By default, FlopCountAnalysis count one fused-mult-add (FMA) as one flop.
     # However, in our context, we count 1 FMA as 2 flops instead of 1.

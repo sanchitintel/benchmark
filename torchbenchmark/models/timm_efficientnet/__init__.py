@@ -10,7 +10,7 @@ class Model(BenchmarkModel):
     task = COMPUTER_VISION.CLASSIFICATION
     optimized_for_inference = True
 
-    def __init__(self, device=None, jit=False, variant='mixnet_m', precision='float32'):
+    def __init__(self, device=None, jit=False, fuser="", variant='mixnet_m', precision='float32'):
         super().__init__()
         self.device = device
         self.jit = jit
@@ -32,10 +32,16 @@ class Model(BenchmarkModel):
         )
 
         if jit:
-            self.model = torch.jit.script(self.model)
-            self.eval_model = torch.jit.script(self.eval_model)
-            assert isinstance(self.eval_model, torch.jit.ScriptModule)
-            self.eval_model = torch.jit.optimize_for_inference(self.eval_model)
+            if fuser == "llga":
+                self.model = torch.jit.script(self.model)
+                self.eval_model.eval()
+                self.eval_model = torch.jit.script(self.eval_model)
+                self.eval_model = torch.jit.freeze(self.eval_model)
+            else:
+                self.model = torch.jit.script(self.model)
+                self.eval_model = torch.jit.script(self.eval_model)
+                assert isinstance(self.eval_model, torch.jit.ScriptModule)
+                self.eval_model = torch.jit.optimize_for_inference(self.eval_model)
     
 
     def _gen_target(self, batch_size):
