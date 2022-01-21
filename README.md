@@ -1,11 +1,14 @@
 # PyTorch Benchmarks for oneDNN Graph evaluation
-This is a collection of open source benchmarks used to evaluate PyTorch performance.
+This is a collection of open source benchmarks used to evaluate PyTorch performance with oneDNN Graph, which is meant to complement PyTorch's NNC.
 
 `torchbenchmark/models` contains copies of popular or exemplary workloads which have been modified to
 (a) expose a standardized API for benchmark drivers, (b) enable JIT for inference,
  (c) contain a miniature version of train/test data and a dependency install script.
 
-This fork is mostly based on changes in an [older fork](https://github.com/chunyuan-w/benchmark/tree/chunyuan/llga_preview2)  of TorchBench. 
+This fork is mostly based on changes in an [older fork](https://github.com/chunyuan-w/benchmark/tree/chunyuan/llga_preview2)  of TorchBench.
+
+While comparing, oneDNN Graph enabled models are JIT-traced.
+Their inference runtimes are compared with the corresponding models being JIT-scripted with oneDNN Graph disabled ( 
 
 ## Installation
 The benchmark suite should be self contained in terms of dependencies,
@@ -38,6 +41,12 @@ For instance, to run the resnet50 model on CPU for inference mode:
 python test.py -k test_eval[test_resnet50-cpu-jit] -- fuser llga --ignore_machine_config
 ```
 
+
+### Using `test_bench.py`
+As an example, to run the resnet50 model on CPU for inference mode:
+```
+KMP_AFFINITY=granularity=fine,verbose,compact,1,0 KMP_BLOCKTIME=1 KMP_SETTINGS=1 MKL_NUM_THREADS=1 OMP_NUM_THREADS=1 numactl --membind=0 --cpunodebind=0 python test_bench.py -k test_eval[test_resnet50-cpu-jit] -- fuser llga --ignore_machine_config --cpu_only
+```
 
 
 ### Using pytest-benchmark driver
