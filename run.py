@@ -189,6 +189,8 @@ if __name__ == "__main__":
             print(f"The model {args.model} doesn't support specifying batch size, please remove --bs argument in the commandline.")
             exit(1)
     else:
+        if args.fuser == "llga":
+            torch.jit.enable_onednn_fusion(True)
         if support_extra_args:
             m = Model(device=args.device, jit=(args.mode == "jit"), extra_args=extra_args, fuser=args.fuser)
         else:
