@@ -17,7 +17,7 @@ different torch versions can be benchmarked.
 
 
 ## Using a low-noise machine
-Apart from the instructions mentioned in the TorchBench repo, the only addendum here is that benchmarking some models might entail run-to-run variation. We've observed that using libtcmalloc produces more reproducible results (with less run-to-run variation). We also recommend preloading Intel OpenMP.
+Apart from the instructions mentioned in the TorchBench repo, the only addendum here is that benchmarking some models might entail run-to-run variation. We've observed that using libtcmalloc/libjemalloc produces more reproducible results (with less run-to-run variation). We also recommend preloading Intel OpenMP.
 
 
 ## Running Model Benchmarks
