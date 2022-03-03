@@ -8,7 +8,7 @@ This is a collection of open source benchmarks used to evaluate PyTorch performa
 This fork is mostly based on changes in an [older fork](https://github.com/chunyuan-w/benchmark/tree/chunyuan/llga_preview2)  of TorchBench.
 
 While comparing, oneDNN Graph enabled models are JIT-traced.
-Their inference runtimes are compared with the corresponding models being JIT-scripted with oneDNN Graph disabled ( 
+Their inference runtimes are compared with the corresponding models being JIT-scripted with oneDNN Graph disabled.
 
 ## Installation
 The benchmark suite should be self contained in terms of dependencies,
@@ -56,3 +56,9 @@ KMP_AFFINITY=granularity=fine,verbose,compact,1,0 KMP_BLOCKTIME=1 KMP_SETTINGS=1
 ### Running individual models to debug
 ```
 python run.py <model> -d cpu -m jit -t eval --fuser llga
+```
+
+It might be helpful to use this environment variable with run.py -
+```
+PYTORCH_JIT_LOG_LEVEL=">>graph_helper:>>graph_fuser:>>kernel:>>interface"
+```
