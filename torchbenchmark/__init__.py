@@ -258,14 +258,14 @@ class ModelTask(base_task.TaskBase):
 
     @base_task.run_in_worker(scoped=True)
     @staticmethod
-    def make_model_instance(device: str, jit: bool, fuser: str) -> None:
+    def make_model_instance(device: str, jit: bool, fuser: str, dtype: str) -> None:
         # TODO: currently, I have to re-enable the fusion here.
         # In the SubprocessWorker, the parent states are lost as described
         # in components/_impl/workers/subprocess_worker.py:Class SubprocessWorker
         if fuser == "llga":
             torch.jit.enable_onednn_fusion(True)
         Model = globals()["Model"]
-        model = Model(device=device, jit=jit, fuser=fuser)
+        model = Model(device=device, jit=jit, fuser=fuser, dtype=dtype)
 
         import gc
         gc.collect()
