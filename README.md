@@ -7,8 +7,8 @@ This is a collection of open source benchmarks used to evaluate PyTorch performa
 
 ## Pre requisits
 1. install pytorch from source from this location: https://github.com/chunyuan-w/pytorch/tree/onednn-graph-preview4
-2. instgall torchvision from source (see: https://github.com/pytorch/vision)
-3. instgall torchtext from source (see: https://github.com/pytorch/text)
+2. install torchvision from source (see: https://github.com/pytorch/vision)
+3. install torchtext from source (see: https://github.com/pytorch/text)
 
 ## Installation
 The benchmark suite should be self contained in terms of dependencies,
