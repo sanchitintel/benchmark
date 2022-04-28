@@ -5,10 +5,18 @@ This is a collection of open source benchmarks used to evaluate PyTorch performa
 (a) expose a standardized API for benchmark drivers, (b) optionally, enable JIT,
  (c) contain a miniature version of train/test data and a dependency install script.
 
+## Pre requisits
+1. install pytorch from source from this location: https://github.com/chunyuan-w/pytorch/tree/onednn-graph-preview4
+2. instgall torchvision from source (see: https://github.com/pytorch/vision)
+3. instgall torchtext from source (see: https://github.com/pytorch/text)
+
 ## Installation
 The benchmark suite should be self contained in terms of dependencies,
 except for the torch products which are intended to be installed separately so
 different torch versions can be benchmarked.
+
+just run:
+`python install.py`
 
 ### Using Pre-built Packages
 We support python 3.7 and 3.8, and 3.8 is recommended. Currently, there are compatibility issues with 3.9+.  Conda is optional but suggested. To switch to python 3.8 in conda:
