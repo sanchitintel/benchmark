@@ -16,7 +16,7 @@ import torch.profiler as profiler
 from torchbenchmark import load_model_by_name
 import torch
 
-WARMUP_ROUNDS = 3
+WARMUP_ROUNDS = 0
 
 def run_one_step_with_cudastreams(func, streamcount):
 
@@ -150,6 +150,7 @@ if __name__ == "__main__":
     parser.add_argument("--cudastreams", action="store_true",
                         help="Utilization test using increasing number of cuda streams.")
     parser.add_argument("--bs", type=int, help="Specify batch size to the test.")
+    parser.add_argument("--dynamic_bs", type=int, help="Inference will be done with a different batch size specified here", default=0)
     parser.add_argument("--flops", action="store_true", help="Return the flops result")
     parser.add_argument("--fuser", help="Use one of the available fusers: te, old, nvfuser", default="te", choices=["te", "old", "nvfuser", "llga"])
     args, extra_args = parser.parse_known_args()
@@ -192,9 +193,9 @@ if __name__ == "__main__":
         if args.fuser == "llga":
             torch.jit.enable_onednn_fusion(True)
         if support_extra_args:
-            m = Model(device=args.device, jit=(args.mode == "jit"), extra_args=extra_args, fuser=args.fuser)
+            m = Model(device=args.device, jit=(args.mode == "jit"), extra_args=extra_args, fuser=args.fuser, dynamic_bs=args.dynamic_bs)
         else:
-            m = Model(device=args.device, jit=(args.mode == "jit"), fuser=args.fuser)
+            m = Model(device=args.device, jit=(args.mode == "jit"), fuser=args.fuser, dynamic_bs=args.dynamic_bs)
 
     test = getattr(m, args.test)
     model_flops = None

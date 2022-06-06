@@ -16,6 +16,7 @@ def pytest_addoption(parser):
                      help="The best attempt to check results for inference runs. Not all models support this!")
     parser.addoption("--cpu_only", action='store_true',
                     help="Run benchmarks on cpu only and ignore machine configuration checks")
+    parser.addoption("--dynamic_bs", default=0)
 
 
 def set_fuser(fuser):

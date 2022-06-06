@@ -69,7 +69,8 @@ class TestBenchNetwork:
                 return  # Model is not supported.
 
             with torch.no_grad():
-                task.make_model_instance(device=device, jit=(compiler == 'jit'), fuser=pytestconfig.getoption("fuser"))
+                task.make_model_instance(device=device, jit=(compiler == 'jit'), fuser=pytestconfig.getoption("fuser"),
+                                         dynamic_bs=pytestconfig.getoption("dynamic_bs"))
 
                 with task.no_grad(disable_nograd=pytestconfig.getoption("disable_nograd")):
                     task.set_eval()

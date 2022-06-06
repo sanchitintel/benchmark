@@ -17,6 +17,6 @@ test_bench.py::TestBenchNetwork::test_eval[timm_vision_transformer-cpu-jit] \
 test_bench.py::TestBenchNetwork::test_eval[timm_efficientnet-cpu-jit] \
 test_bench.py::TestBenchNetwork::test_eval[timm_vovnet-cpu-jit]"
 
-pytest --ignore_machine_config $models --cpu_only --benchmark-json nollga.json
-pytest --ignore_machine_config $models --fuser llga --cpu_only --benchmark-json llga.json
-python compare.py nollga.json llga.json
+python3.8 -m pytest --ignore_machine_config $models --fuser llga --dynamic_bs 128 --cpu_only --benchmark-json llga_dynamic.json
+python3.8 -m pytest --ignore_machine_config $models --fuser llga --cpu_only --benchmark-json llga_static.json
+python3.8 -m  compare.py llga_dynamic.json llga_static.json

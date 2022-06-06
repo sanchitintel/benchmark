@@ -100,7 +100,8 @@ def _load_test(path, device):
         task = ModelTask(path, timeout=TIMEOUT)
         with task.watch_cuda_memory(skip=(device != "cuda"), assert_equal=self.assertEqual):
             try:
-                task.make_model_instance(device=device, jit=False, fuser=pytestconfig.getoption("fuser"))
+                task.make_model_instance(device=device, jit=False, fuser=pytestconfig.getoption("fuser"),
+                                         dynamic_bs=pytestconfig.getoption("dynamic_bs"))
                 task.check_device()
                 task.del_model_instance()
             except NotImplementedError:

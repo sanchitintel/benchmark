@@ -8,7 +8,7 @@ from torchbenchmark.util.framework.vision.args import parse_args, apply_args
 class TorchVisionModel(BenchmarkModel):
     optimized_for_inference = True
 
-    def __init__(self, model_name=None, device=None, jit=False, fuser="", train_bs=1, eval_bs=1, extra_args=[]):
+    def __init__(self, model_name=None, device=None, jit=False, fuser="", dynamic_bs=0, train_bs=1, eval_bs=1, extra_args=[]):
         super().__init__()
         self.device = device
         self.jit = jit
@@ -26,13 +26,16 @@ class TorchVisionModel(BenchmarkModel):
 
         if self.jit:
             if fuser == "llga":
-                self.model = torch.jit.trace(self.model, self.example_inputs)
                 self.eval_model.eval()
                 self.eval_model = torch.jit.trace(self.eval_model, self.eval_example_inputs)
                 self.eval_model = torch.jit.freeze(self.eval_model)
                 # Run two warmup iterations here
                 self.eval_model(torch.randn((eval_bs, 3, 224, 224)).to(self.device))
                 self.eval_model(torch.randn((eval_bs, 3, 224, 224)).to(self.device))
+                self.eval_model(torch.randn((eval_bs, 3, 224, 224)).to(self.device))
+                if dynamic_bs != 0:
+                    eval_bs = dynamic_bs
+                    self.eval_example_inputs = (torch.randn((eval_bs, 3, 224, 224)).to(self.device),)
             else:
                 if hasattr(torch.jit, '_script_pdt'):
                     self.model = torch.jit._script_pdt(self.model, example_inputs=[self.example_inputs, ])

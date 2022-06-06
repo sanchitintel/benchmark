@@ -11,7 +11,7 @@ class Model(BenchmarkModel):
     optimized_for_inference = True
 
     def __init__(self, device=None, jit=False, fuser="", variant='vovnet39a',
-                 precision='float32', train_bs=32, eval_bs=32):
+                 precision='float32', dynamic_bs=0, train_bs=32, eval_bs=32):
         super().__init__()
         self.device = device
         self.jit = jit
@@ -36,10 +36,14 @@ class Model(BenchmarkModel):
 
         if jit:
             if fuser == "llga":
-                self.model = torch.jit.trace(self.model, self.example_inputs)
                 self.eval_model.eval()
                 self.eval_model = torch.jit.trace(self.eval_model, self.infer_example_inputs)
                 self.eval_model = torch.jit.freeze(self.eval_model)
+                self.eval_model(self.infer_example_inputs)
+                self.eval_model(self.infer_example_inputs)
+                self.eval_model(self.infer_example_inputs)
+                if dynamic_bs != 0:
+                   self.infer_example_inputs = self._gen_input(dynamic_bs)
             else:
                 self.model = torch.jit.script(self.model)
                 self.eval_model = torch.jit.script(self.eval_model)
