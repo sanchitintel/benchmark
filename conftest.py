@@ -1,6 +1,7 @@
 import os
 import pytest
 import torch
+import intel_extension_for_pytorch as ipex
 from torchbenchmark.util.machine_config import get_machine_config, check_machine_configured
 
 
@@ -45,7 +46,7 @@ def set_fuser(fuser):
     elif fuser == "llga":
         torch._C._jit_set_profiling_executor(True)
         torch._C._jit_set_profiling_mode(True)
-        torch.jit.enable_onednn_fusion(True)
+        ipex._C.set_llga_fp32_bf16_enabled(True)
     else:
         # pytest_addoption should always set the default fuser
         assert(False)

@@ -15,6 +15,7 @@ import torch.profiler as profiler
 
 from torchbenchmark import load_model_by_name
 import torch
+import intel_extension_for_pytorch as ipex
 
 WARMUP_ROUNDS = 0
 
@@ -191,7 +192,7 @@ if __name__ == "__main__":
             exit(1)
     else:
         if args.fuser == "llga":
-            torch.jit.enable_onednn_fusion(True)
+            ipex._C.set_llga_fp32_bf16_enabled(True)
         if support_extra_args:
             m = Model(device=args.device, jit=(args.mode == "jit"), extra_args=extra_args, fuser=args.fuser, dynamic_bs=args.dynamic_bs)
         else:

@@ -262,8 +262,9 @@ class ModelTask(base_task.TaskBase):
         # TODO: currently, I have to re-enable the fusion here.
         # In the SubprocessWorker, the parent states are lost as described
         # in components/_impl/workers/subprocess_worker.py:Class SubprocessWorker
+        import intel_extension_for_pytorch as ipex
         if fuser == "llga":
-            torch.jit.enable_onednn_fusion(True)
+            ipex._C.set_llga_fp32_bf16_enabled(True)
         Model = globals()["Model"]
         model = Model(device=device, jit=jit, fuser=fuser)
 
