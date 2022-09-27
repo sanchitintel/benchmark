@@ -51,6 +51,8 @@ def check_precision(model: 'torchbenchmark.util.model.BenchmarkModel', precision
             return True
         if model.test == 'train' and model.device == 'cuda':
             return hasattr(model, 'enable_amp')
+    if precision == "bf16":
+        return True
     assert precision == "fp32", f"Expected precision to be one of fp32, fp16, or amp, but get {precision}"
     return True
 
@@ -74,7 +76,7 @@ def get_precision_default(model: 'torchbenchmark.util.model.BenchmarkModel') -> 
 def parse_decoration_args(model: 'torchbenchmark.util.model.BenchmarkModel', extra_args: List[str]) -> Tuple[argparse.Namespace, List[str]]:
     parser = argparse.ArgumentParser()
     parser.add_argument("--distributed", choices=["ddp"], default=None, help="Enable distributed trainer")
-    parser.add_argument("--precision", choices=["fp32", "fp16", "amp"], default=get_precision_default(model), help="choose precisions from: fp32, fp16, or amp")
+    parser.add_argument("--precision", choices=["fp32", "bf16", "fp16", "amp"], default=get_precision_default(model), help="choose precisions from: fp32, fp16, or amp")
     parser.add_argument("--channels-last", action='store_true', help="enable channels-last memory layout")
     dargs, opt_args = parser.parse_known_args(extra_args)
     if not check_precision(model, dargs.precision):
@@ -100,7 +102,7 @@ def apply_decoration_args(model: 'torchbenchmark.util.model.BenchmarkModel', dar
         else:
             import torch
             model.add_context(lambda: torch.cuda.amp.autocast(dtype=torch.float16))
-    elif not dargs.precision == "fp32":
+    elif not (dargs.precision == "fp32" or dargs.precision == "bf16"):
         assert False, f"Get an invalid precision option: {dargs.precision}. Please report a bug."
 
 # Dispatch arguments based on model type
@@ -108,14 +110,14 @@ def parse_opt_args(model: 'torchbenchmark.util.model.BenchmarkModel', opt_args: 
     parser = argparse.ArgumentParser()
     parser.add_argument("--backend", choices=list_backends(), help="enable backends")
     parser.add_argument("--fx2trt", action='store_true', help="enable fx2trt")
-    parser.add_argument("--fuser", type=str, default="", choices=["fuser0", "fuser1", "fuser2"], help="enable fuser")
+    parser.add_argument("--fuser", type=str, default="", choices=["fuser0", "fuser1", "fuser2", "fuser3", "old", "te", "nvfuser"], help="enable fuser")
     parser.add_argument("--torch_trt", action='store_true', help="enable torch_tensorrt")
     parser.add_argument("--flops", choices=["fvcore", "dcgm"], help="Return the flops result")
     parser.add_argument("--use_cosine_similarity", action='store_true', help="use cosine similarity for correctness check")
     args, extra_args = parser.parse_known_args(opt_args)
     if model.jit:
         args.backend = "torchscript"
-    if model.device == "cpu" and args.fuser:
+    if model.device == "cpu" and args.fuser not in ["old", "te", "fuser3", "nvfuser", ""]:
         raise NotImplementedError("Fuser only works with GPU.")
     if not (model.device == "cuda" and model.test == "eval"):
         if args.fx2trt or args.torch_trt:
@@ -127,13 +129,13 @@ def parse_opt_args(model: 'torchbenchmark.util.model.BenchmarkModel', opt_args: 
 def apply_opt_args(model: 'torchbenchmark.util.model.BenchmarkModel', args: argparse.Namespace, extra_args: List[str]):
     if args.flops == "fvcore":
         enable_fvcore_flops(model)
-    if args.backend:
+    if args.backend and args.fuser != "fuser3":
         backend = BACKENDS[args.backend]
         # transform the model using the specified backend
         backend(model, backend_args=extra_args)
         return
     assert not extra_args, f"Exptected no unknown args at this point, found {extra_args}"
-    if args.fuser:
+    if args.fuser and args.fuser != "fuser3":
         import torch
         model.add_context(lambda: torch.jit.fuser(args.fuser))
     if args.fx2trt:

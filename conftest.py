@@ -5,7 +5,7 @@ from torchbenchmark.util.machine_config import get_machine_config, check_machine
 
 
 def pytest_addoption(parser):
-    parser.addoption("--fuser", help="Use one of the available fusers: te, old, nvfuser", default="te", choices=["te", "old", "nvfuser"])
+    parser.addoption("--fuser", help="Use one of the available fusers: te, old, nvfuser", default="te", choices=["te", "old", "nvfuser", "fuser3"])
     parser.addoption("--ignore_machine_config",
                      action='store_true',
                      help="Disable checks/assertions for machine configuration for stable benchmarks")
@@ -18,6 +18,7 @@ def pytest_addoption(parser):
                     help="Run benchmarks on cpu only and ignore machine configuration checks")
     parser.addoption("--cuda_only", action='store_true',
                     help="Run benchmarks on cuda only and ignore machine configuration checks")
+    parser.addoption("--precision", choices=["fp32", "bf16"], default="fp32", help="choose precisions from: fp32 or bf16")
 
 def set_fuser(fuser):
     if fuser == "te":
@@ -42,6 +43,11 @@ def set_fuser(fuser):
         torch._C._jit_override_can_fuse_on_gpu(False)
         torch._C._jit_set_nvfuser_guard_mode(True)
         torch._C._jit_set_nvfuser_enabled(True)
+    elif fuser == "fuser3":
+        torch._C._jit_set_profiling_executor(True)
+        torch._C._jit_set_profiling_mode(True)
+        torch._C._jit_override_can_fuse_on_cpu(True)
+        torch.jit.enable_onednn_fusion(True)
     else:
         # pytest_addoption should always set the default fuser
         assert(False)

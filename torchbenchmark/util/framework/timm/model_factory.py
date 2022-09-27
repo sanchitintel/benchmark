@@ -15,7 +15,7 @@ class TimmModel(BenchmarkModel):
     # Default eval precision on CUDA device is fp16
     DEFAULT_EVAL_CUDA_PRECISION = "fp16"
 
-    def __init__(self, model_name, test, device, jit=False, batch_size=None, extra_args=[]):
+    def __init__(self, model_name, test, device, jit=False, batch_size=64, extra_args=[]):
         super().__init__(test=test, device=device, jit=jit, batch_size=batch_size, extra_args=extra_args)
         torch.backends.cudnn.deterministic = False
         torch.backends.cudnn.benchmark = False
@@ -31,6 +31,25 @@ class TimmModel(BenchmarkModel):
             self.model.train()
         elif test == "eval":
             self.model.eval()
+            if self.fuser == "fuser3":
+                torch.jit.enable_onednn_fusion(True)
+                if self.precision == "bf16":
+                    torch._C._jit_set_autocast_mode(False)
+                    with torch.cpu.amp.autocast(cache_enabled=False, dtype=torch.bfloat16):
+                        import torch.fx.experimental.optimization as optimization
+                        self.model = optimization.fuse(self.model)
+                        self.model = torch.jit.trace(self.model, [self.example_inputs])
+                else:
+                    self.model = torch.jit.trace(self.model, self.example_inputs)
+                self.model = torch.jit.freeze(self.model)
+            else:
+                self.model = torch.jit.trace(self.model, [self.example_inputs])
+                self.model = torch.jit.optimize_for_inference(self.model)
+            # warm-up. test_bench skips it by default
+            self.model(self.example_inputs)
+            self.model(self.example_inputs)
+            self.model(self.example_inputs)
+
 
         if device == 'cuda':
             torch.cuda.empty_cache()

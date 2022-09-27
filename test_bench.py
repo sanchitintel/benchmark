@@ -89,8 +89,8 @@ class TestBenchNetwork:
             task = ModelTask(model_path)
             if not task.model_details.exists:
                 return  # Model is not supported.
-
-            task.make_model_instance(test="eval", device=device, jit=(compiler == 'jit'))
+            extra_args = ["--fuser", pytestconfig.getoption("fuser"), "--precision", pytestconfig.getoption("precision")]
+            task.make_model_instance(test="eval", device=device, jit=True, extra_args=extra_args)
 
             with task.no_grad(disable_nograd=pytestconfig.getoption("disable_nograd")):
                 benchmark(task.invoke)

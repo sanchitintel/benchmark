@@ -31,6 +31,24 @@ class TorchVisionModel(BenchmarkModel):
             self.real_output = [ torch.rand_like(self.example_outputs) ]
         elif test == "eval":
             self.model.eval()
+            if self.fuser == "fuser3":
+                torch.jit.enable_onednn_fusion(True)
+                if self.precision == "bf16":
+                    torch._C._jit_set_autocast_mode(False)
+                    with torch.cpu.amp.autocast(cache_enabled=False, dtype=torch.bfloat16):
+                        import torch.fx.experimental.optimization as optimization
+                        self.model = optimization.fuse(self.model)
+                        self.model = torch.jit.trace(self.model, self.example_inputs)
+                else:
+                    self.model = torch.jit.trace(self.model, self.example_inputs)
+                self.model = torch.jit.freeze(self.model)
+            else:
+                self.model = torch.jit.script(self.model, self.example_inputs)
+                self.model = torch.jit.optimize_for_inference(self.model)
+            # warm-up. test_bench skips it by default
+            self.model(*self.example_inputs)
+            self.model(*self.example_inputs)
+            self.model(*self.example_inputs)
 
     def get_flops(self):
         return self.flops, self.batch_size

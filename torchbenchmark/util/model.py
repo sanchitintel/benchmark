@@ -62,6 +62,8 @@ class BenchmarkModel(metaclass=PostInitProcessor):
     test: str
     device: str
     jit: bool
+    fuser: str
+    precision: str
     batch_size: int
     extra_args: List[str]
     run_contexts: List[ContextManager]
@@ -84,12 +86,10 @@ class BenchmarkModel(metaclass=PostInitProcessor):
             enable_profiling_executor  # force JIT profiling executor to be enabled by default
         ]
         set_random_seed()
-
-    # Run the post processing for model acceleration
-    def __post__init__(self):
         # sanity checks of the options
         assert self.test == "train" or self.test == "eval", f"Test must be 'train' or 'eval', but provided {self.test}."
         self.dargs, opt_args = parse_decoration_args(self, self.extra_args)
+        self.precision = self.dargs.precision
         # if the args contain "--torchdynamo", parse torchdynamo args
         if "--torchdynamo" in opt_args:
             self.dynamo = True
@@ -98,6 +98,21 @@ class BenchmarkModel(metaclass=PostInitProcessor):
         else:
             self.dynamo = False
             self.opt_args, self.extra_args = parse_opt_args(self, opt_args)
+        self.fuser = self.opt_args.fuser
+
+    # Run the post processing for model acceleration
+    def __post__init__(self):
+        self.dargs, opt_args = parse_decoration_args(self, self.extra_args)
+        self.precision = self.dargs.precision
+        # if the args contain "--torchdynamo", parse torchdynamo args
+        if "--torchdynamo" in opt_args:
+            self.dynamo = True
+            from torchbenchmark.util.backends.torchdynamo import parse_torchdynamo_args
+            self.opt_args, self.extra_args = parse_torchdynamo_args(self, opt_args)
+        else:
+            self.dynamo = False
+            self.opt_args, self.extra_args = parse_opt_args(self, opt_args)
+        self.fuser = self.opt_args.fuser
         should_check_correctness = check_correctness_p(self, self.opt_args)
         if should_check_correctness:
             self.eager_output = stableness_check(self, cos_sim=False, deepcopy=self.DEEPCOPY, rounds=1)
@@ -198,7 +213,7 @@ class BenchmarkModel(metaclass=PostInitProcessor):
         return True
 
     def check_opt_vs_noopt_jit(self):
-        if not self.jit:
+        if not self.jit or self.fuser == "fuser3":
             return
 
         model_name = inspect.getfile(self.__class__).split(os.sep)[-2]
