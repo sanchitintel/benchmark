@@ -8,6 +8,7 @@ Please refer to the main repo for instructions
 
 ## Running Model Benchmarks
 Please run `compare_llga.sh`, which compares the performance of some models with respect to oneDNN Graph & PyTorch JIT OFI (Optimize For Inference).
+The BF16 tests should be run on Xeon Cooper Lake platforms or beyond.
 
 
 ### Using pytest-benchmark driver
